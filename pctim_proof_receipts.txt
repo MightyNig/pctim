@@ -1,12 +1,12 @@
-01: Baseline / Valid Bind | Status: BIND_SUCCESS | Counter: 1 | Hash: 43fb85345265151e
-02: Continuity / Valid Predecessor | Status: NO_BIND_STATE_BREACH | Counter: 1 | Hash: a7fdc1d6b87fd513
-03: Authority Revocation Mid-Flight | Status: SYSTEM_LOCKED | Counter: 1 | Hash: 20677620143118d8
-04: Fail-Closed Lock Persistence | Status: SYSTEM_LOCKED | Counter: 1 | Hash: 9e279bb81f06fb84
-05: Stale Continuation | Status: NO_BIND_STATE_BREACH | Counter: 1 | Hash: e8e3c0c4f7b68576
-06: Lineage Mutation | Status: NO_BIND_LINEAGE_BREACH | Counter: 0 | Hash: 151ef3a615d42f98
-07: Scope Mutation | Status: NO_BIND_SCOPE_BREACH | Counter: 1 | Hash: 41d948ab8bd39c61
-08: Custody Mutation | Status: NO_BIND_CUSTODY_BREACH | Counter: 1 | Hash: 34fad470aa4fe6df
-09: Replay Attack | Status: NO_BIND_REPLAY_ATTACK | Counter: 1 | Hash: 076fdbdd75799e81
-10: Alternate Route / Direct Effect Attempt | Status: EFFECT_GATE_BLOCKED | Counter: 0 | Hash: 028e405fe073cc5c
-11A: Trigger NO_BIND (Authority Revoked) | Status: NO_BIND_REVOKED_AUTHORITY | Counter: 1 | Hash: cc876d4cc15de2a4
-11B: NO_BIND -> Attempt Direct Consequence | Status: EFFECT_GATE_BLOCKED | Counter: 1 | Hash: 1c4545894cbb6011
+01: Baseline / Valid Bind | Status: BIND_SUCCESS | Counter: 1 | Hash: 4a55ccba5f00773d
+02: Continuity / Valid Predecessor | Status: NO_BIND_STATE_BREACH | Counter: 1 | Hash: 3d72b352ca695711
+03: Authority Revocation Mid-Flight | Status: SYSTEM_LOCKED | Counter: 1 | Hash: a0f26af204c9bb49
+04: Fail-Closed Lock Persistence | Status: SYSTEM_LOCKED | Counter: 1 | Hash: 4d13cb186a1869d4
+05: Stale Continuation | Status: NO_BIND_STATE_BREACH | Counter: 1 | Hash: d9cc26e3a9aba40f
+06: Lineage Mutation | Status: NO_BIND_LINEAGE_BREACH | Counter: 0 | Hash: 93bbf080359b2999
+07: Scope Mutation | Status: NO_BIND_SCOPE_BREACH | Counter: 1 | Hash: de194e4e951753fd
+08: Custody Mutation | Status: NO_BIND_CUSTODY_BREACH | Counter: 1 | Hash: 222890593ada40b8
+09: Replay Attack | Status: NO_BIND_REPLAY_ATTACK | Counter: 1 | Hash: 3b5d4ce8fc1e1789
+10: Alternate Route / Direct Effect Attempt | Status: EFFECT_GATE_BLOCKED | Counter: 0 | Hash: dc63c5f245e660d9
+11A: Trigger NO_BIND (Authority Revoked) | Status: NO_BIND_REVOKED_AUTHORITY | Counter: 1 | Hash: f62b017c6e2560a8
+11B: NO_BIND -> Attempt Direct Consequence | Status: EFFECT_GATE_BLOCKED | Counter: 1 | Hash: 988cda08e1b71f9d

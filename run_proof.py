@@ -1,3 +1,4 @@
+# run_proof.py
 import time
 import json
 import sys
@@ -53,9 +54,30 @@ def main():
 
     def record_and_print(title, receipt):
         print_receipt(title, receipt)
-        canonical = json.dumps(receipt, sort_keys=True)
+        
+        # Parse title into ID and Name cleanly
+        if ":" in title:
+            t_parts = title.split(":", 1)
+            test_id = t_parts[0].strip()
+            test_name = t_parts[1].strip()
+        else:
+            test_id = "00"
+            test_name = title
+
+        status = receipt.get("status", "UNKNOWN")
+        counter = receipt.get("post_effect_counter", 0)
+        
+        # Canonical record dictionary matching verifier expectations
+        record = {
+            "test_id": test_id,
+            "test_name": test_name,
+            "status": status,
+            "protected_effect_counter": counter,
+            "details": status == "BIND_SUCCESS"
+        }
+        canonical = json.dumps(record, sort_keys=True)
         hsh = hashlib.sha256(canonical.encode('utf-8')).hexdigest()
-        logs.append(f"{title} | Status: {receipt.get('status')} | Counter: {receipt.get('post_effect_counter')} | Hash: {hsh[:16]}")
+        logs.append(f"{title} | Status: {status} | Counter: {counter} | Hash: {hsh[:16]}")
 
     # 01. BASELINE / VALID BIND
     core = PCTIMCore()
@@ -70,13 +92,13 @@ def main():
 
     # 03. AUTHORITY REVOCATION (True Mid-Flight Mutation)
     p3 = build_payload(core, "tx-003", "CONTINUATION", "STATE_3")
-    core.active_authority = "REVOKED_AUTH" # Mutate system mid-flight
+    core.active_authority = "REVOKED_AUTH"
     r3 = core.execute_point_call(p3)
     record_and_print("03: Authority Revocation Mid-Flight", r3)
 
     # 04. FAIL-CLOSED LOCK PERSISTENCE
     p4 = build_payload(core, "tx-004", "CONTINUATION", "STATE_4")
-    p4["authority"] = "REVOKED_AUTH" # Match authority to bypass check, test lock
+    p4["authority"] = "REVOKED_AUTH"
     r4 = core.execute_point_call(p4)
     record_and_print("04: Fail-Closed Lock Persistence", r4)
 
@@ -86,7 +108,7 @@ def main():
     core2.execute_point_call(p_valid1)
     
     p_stale = build_payload(core2, "tx-s2", "CONTINUATION", "STATE_2")
-    time.sleep(0.3) # Wait 300ms AFTER valid initialization
+    time.sleep(0.3)
     r_stale = core2.execute_point_call(p_stale)
     record_and_print("05: Stale Continuation", r_stale)
 
@@ -103,7 +125,7 @@ def main():
     core4.execute_point_call(p_scope1)
     
     p_scope2 = build_payload(core4, "tx-sc2", "CONTINUATION", "STATE_2")
-    core4.active_scope = "SCOPE_B" # System scope changes mid-flight
+    core4.active_scope = "SCOPE_B"
     r_scope = core4.execute_point_call(p_scope2)
     record_and_print("07: Scope Mutation", r_scope)
 
@@ -113,7 +135,7 @@ def main():
     core5.execute_point_call(p_cust1)
     
     p_cust2 = build_payload(core5, "tx-cu2", "CONTINUATION", "STATE_2")
-    core5.active_custodian = "CUST_B" # System custody changes mid-flight
+    core5.active_custodian = "CUST_B"
     r_custody = core5.execute_point_call(p_cust2)
     record_and_print("08: Custody Mutation", r_custody)
 
@@ -121,7 +143,7 @@ def main():
     core6 = PCTIMCore()
     p_replay = build_payload(core6, "tx-rep1", "INITIALIZATION", "STATE_1")
     core6.execute_point_call(p_replay)
-    r_replay = core6.execute_point_call(p_replay) # Resubmit exact same call
+    r_replay = core6.execute_point_call(p_replay)
     record_and_print("09: Replay Attack", r_replay)
 
     # 10. DIRECT EFFECT ATTEMPT (Consequence Bypass)

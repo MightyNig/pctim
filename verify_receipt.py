@@ -1,4 +1,3 @@
-# verify_receipt.py
 import hashlib
 import json
 import os
@@ -9,22 +8,30 @@ def verify_all_receipts():
         print("FAIL: Receipt file not found.")
         return False
 
-    # FIX 1: Enforce utf-8 encoding to match run_proof.py output
     with open(receipts_path, "r", encoding="utf-8") as f:
         lines = [line.strip() for line in f if line.strip()]
 
     all_passed = True
     for line in lines:
         parts = line.split(" | ")
-        test_meta = parts[0].split("] ")
-        test_id = test_meta[0].replace("[", "")
-        test_name = test_meta[1]
-        status = parts[1].replace("Status: ", "")
-        counter = int(parts[2].replace("Counter: ", ""))
-        recorded_hash = parts[3].replace("Hash: ", "")
+        if len(parts) < 4:
+            continue
+            
+        header_part = parts[0].strip()
+        if ":" in header_part:
+            sub_parts = header_part.split(":", 1)
+            test_id = sub_parts[0].strip()
+            test_name = sub_parts[1].strip()
+        else:
+            test_id = "00"
+            test_name = header_part
 
-        # FIX 2: Correctly map the 'details' boolean. 
-        # run_proof.py sets details=True when pre != post (which happens on BIND_SUCCESS)
+        status = parts[1].replace("Status:", "").strip()
+        counter_str = parts[2].replace("Counter:", "").strip()
+        counter = int(counter_str) if counter_str.isdigit() else 0
+        recorded_hash = parts[3].replace("Hash:", "").strip()
+
+        # Exactly matches the canonical record structure hashed by run_proof.py
         record = {
             "test_id": test_id,
             "test_name": test_name,
