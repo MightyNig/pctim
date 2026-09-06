@@ -3,15 +3,16 @@ import hashlib
 import json
 
 class PCTIMCore:
-    def __init__(self, temporal_window_ns=500_000_000, authority="AUTH_123", scope="SCOPE_A", custodian="CUST_A"):
+    def __init__(self, temporal_window_ns=500_000_000, authority="AUTH_123", scope="SCOPE_A", custodian="CUST_A", active_state="STATE_1"):
         # Observable Protected-Effect Surrogate
         self.protected_effect_counter = 0 
-        self._internal_gate_ticket = None # Single-use ticket for the effect gate
+        self._internal_gate_ticket = None  # Single-use ticket for the effect gate
         
         # State & Custody Boundary
         self.active_authority = authority
         self.active_scope = scope
         self.active_custodian = custodian
+        self.active_state = active_state  # NEW: Loophole closed for mid-flight state mutation
         
         # Temporal Lineage
         self.temporal_window_ns = temporal_window_ns
@@ -51,6 +52,11 @@ class PCTIMCore:
             self.is_locked = True
             return False, "NO_BIND_CUSTODY_BREACH", f"Custody mutated mid-flight. Expected {self.active_custodian}."
 
+        # NEW: Explicit check for active state mismatch
+        if payload.get("state_data") != self.active_state:
+            self.is_locked = True
+            return False, "NO_BIND_STATE_BREACH", f"State mutated mid-flight. Expected {self.active_state}."
+
         if payload["step_type"] != "INITIALIZATION" and elapsed_ns > self.temporal_window_ns:
             self.is_locked = True
             return False, "NO_BIND_STALE_EVIDENCE", f"Temporal window exceeded: {elapsed_ns}ns > limit."
@@ -70,11 +76,11 @@ class PCTIMCore:
         """The observable protected-effect surrogate, logically separated behind a single-use verification ticket."""
         if ticket and ticket == self._internal_gate_ticket:
             self.protected_effect_counter += 1
-            self._internal_gate_ticket = None # Consume ticket
+            self._internal_gate_ticket = None  # Consume ticket
             return True
         return False
 
-    def execute_point_call(self, payload):
+    def execute_point_call(self, payload, route="primary"):
         """Primary Route: Evaluates payload and attempts to grant consequence."""
         is_valid, status, reason = self._evaluate_boundary(payload)
         pre_counter = self.protected_effect_counter
@@ -101,12 +107,17 @@ class PCTIMCore:
             "reason": reason,
             "pre_effect_counter": pre_counter,
             "post_effect_counter": self.protected_effect_counter,
-            "new_lineage_commitment": self.current_lineage_hash if is_valid else None
+            "new_lineage_commitment": self.current_lineage_hash if is_valid else None,
+            "route": route
         }
         
         # Cryptographically commit to the receipt itself
         receipt["receipt_hash"] = self._generate_commitment(receipt)
         return receipt
+
+    def alternate_dispatch(self, payload):
+        """NEW Route B: Alternate dispatcher entry point testing execution path mutation."""
+        return self.execute_point_call(payload, route="alternate_dispatcher")
 
     def attempt_direct_consequence(self, payload):
         """Tests if an attacker can bypass the verifier and hit the effect sink directly."""

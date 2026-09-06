@@ -1,12 +1,15 @@
 # PCTIM Proof Carrier v0.1.2
+
 **Point-Call Temporal Integration Model — Bounded Mutation-Boundary Prototype**
 
 ## Overview
-This repository provides a runnable, public-safe proof surface for the **Point-Call Temporal Integration Model (PCTIM)**.
 
-The purpose of this carrier is to evaluate PCTIM's bounded failure behavior when a previously admissible point-call is subjected to deliberate temporal, lineage, authority, scope, custody, replay, and consequence-boundary mutations.
+This repository provides a minimal, hardened test harness designed to evaluate bounded mutation-boundary behavior, state integrity, temporal continuity, and fail-closed persistence.
 
-The carrier demonstrates:
+The carrier demonstrates deterministic refusal mechanics under controlled conditions while strictly isolating proprietary production substrates.
+
+The published carrier exercises:
+
 - lineage commitments across accepted transitions;
 - a configured temporal decay window;
 - live authority, scope, and custody checks;
@@ -15,72 +18,130 @@ The carrier demonstrates:
 - an observable protected-effect surrogate; and
 - refusal of direct attempts to bypass the effect gate.
 
-> **Scope & Access Boundary:** This public carrier exposes bounded execution behavior, integrity-committed boundary receipts, mutation cases, and failure assertions. It intentionally withholds the underlying mathematical substrate, production kernel mechanics, private condition construction, production key architecture, private routing, and deployment logic of PCTIM — while still providing 100% executable, falsifiable proof objects for every scenario in the test matrix.
+## Information Boundary Policy
 
-> **Disclosure Principle:** The carrier demonstrates selected externally observable PCTIM behavior. It is not a complete disclosure or implementation of the PCTIM production system.
+This repository exposes only the bounded public carrier and its verification artifacts.
 
----
+All proprietary Klata Inc. commercial logic, UI telemetry layers, production deployment logic, private routing, and underlying PCTIM mathematical or kernel machinery are withheld.
+
+The public implementation is intentionally limited to the behaviors required to reproduce the published test cases.
+
+> **Disclosure Principle:** This carrier demonstrates selected externally observable PCTIM behavior. It is not a complete disclosure or implementation of the PCTIM production system.
 
 ## Bounded Public Claim
+
 The bounded claim tested by this carrier is:
 
 > **A proposed point-call may reach the protected-effect surrogate only when the published carrier conditions required for that call remain valid at the verification boundary.**
 
-For the carrier, a point-call is valid only when **all** individual boundary conditions pass simultaneously. In plain terms, if even a single condition fails, the entire check fails:
+For the public carrier, a point-call is valid only when all tested boundary conditions pass simultaneously:
 
-$$\text{Valid}(C_i) = \text{Lineage} \land \text{Temporal} \land \text{Authority} \land \text{Scope} \land \text{Custody} \land \text{Nonce}$$
+`Valid(Cᵢ) = Lineage ∧ Temporal ∧ Authority ∧ Scope ∧ Custody ∧ Nonce`
 
-where:
+Where:
+
 - `Lineage` = cryptographic lineage continuity is unbroken;
-- `Temporal` = execution falls within the permitted time window;
-- `Authority` = active authority token is valid and unrevoked;
-- `Scope` = operation remains within the assigned scope;
-- `Custody` = operational custody is verified; and
-- `Nonce` = the request nonce has not been consumed (no replay).
+- `Temporal` = the continuation remains inside the configured temporal window;
+- `Authority` = the active authority condition is valid;
+- `Scope` = the operation remains inside the active scope;
+- `Custody` = the active custody condition is valid; and
+- `Nonce` = the request has not already been consumed.
 
 The bounded consequence property is:
 
-$$\text{Valid}(C_i) = 1 \implies \text{ProtectedEffect}(C_i) = 1$$
+`Valid(Cᵢ) = 1  ⇒  ProtectedEffect(Cᵢ) = 1`
 
 and:
 
-$$\text{Valid}(C_i) = 0 \implies \text{ProtectedEffect}(C_i) = 0$$
+`Valid(Cᵢ) = 0  ⇒  ProtectedEffect(Cᵢ) = 0`
 
 The carrier therefore tests the strict boundary rule:
 
 **NO_BIND → NO PROTECTED EFFECT**
 
----
+This claim is limited to the published carrier implementation and test conditions.
 
 ## The Core Mechanism
 
-PCTIM decouples proposed transaction sequences into strict **point-calls**. Every call must satisfy the carrier's mandatory boundary conditions before a `BIND_SUCCESS` result can produce the protected-effect surrogate.
+PCTIM decouples proposed transaction sequences into strict **point-calls**.
+
+Every continuation must satisfy the carrier's mandatory boundary conditions before a `BIND_SUCCESS` result can produce the protected-effect surrogate.
 
 ### 1. Cryptographic Lineage Continuity
-Accepted transitions produce a commitment derived from the previous lineage commitment and the transition fields. For this public carrier, the implementation uses canonical JSON encoding followed by SHA-256:
 
-$$O_i = H(O_{i-1} \parallel \text{State}_i \parallel \text{Authority}_i \parallel \text{Scope}_i \parallel \text{Custody}_i \parallel \text{Nonce}_i)$$
+Accepted transitions produce a commitment derived from the previous lineage commitment and the published transition fields.
 
-A predecessor mismatch produces `NO_BIND_LINEAGE_BREACH` and forces a fail-closed lockdown — no protected effect is produced.
+For this public carrier, canonical JSON encoding followed by SHA-256 is used for the commitment:
+
+`Oᵢ = H(Oᵢ₋₁ ∥ Stateᵢ ∥ Authorityᵢ ∥ Scopeᵢ ∥ Custodyᵢ ∥ Nonceᵢ)`
+
+A predecessor mismatch produces `NO_BIND_LINEAGE_BREACH` and forces a fail-closed lockdown; no protected effect is produced.
+
+The production PCTIM commitment construction and kernel implementation are not disclosed here.
 
 ### 2. Temporal Decay Window
-Continuation calls are evaluated against the carrier's configured, high-precision temporal window. Where the elapsed interval exceeds the permitted window, the continuation is rejected as stale (`NO_BIND_STALE_EVIDENCE`), and no protected effect is produced.
+
+Continuation calls are evaluated against the carrier's configured temporal window.
+
+Where the elapsed interval exceeds the permitted window, the continuation is rejected as stale:
+
+`NO_BIND_STALE_EVIDENCE`
+
+and no protected effect is produced.
+
+The carrier records temporal references using nanosecond-represented values. Effective clock resolution remains platform-dependent.
 
 ### 3. Live Authority, Scope & Custody Validation
-The carrier evaluates authority, scope, and custody dynamically at the boundary — not just at initialization. A mutation of any required condition mid-flight produces a corresponding `NO_BIND_*` refusal and blocks the tested protected effect instantly.
+
+The carrier evaluates authority, scope, and custody dynamically at the boundary rather than relying solely on initialization state.
+
+A mutation of a required condition produces a corresponding `NO_BIND_*` refusal and prevents the tested protected effect.
 
 ### 4. Single-Use Effect Gate
-A successful boundary evaluation issues a single-use internal gate ticket to the effect gate. The effect gate accepts only the valid ticket and consumes it after use; a forged or otherwise invalid ticket is rejected (`EFFECT_GATE_BLOCKED`). The effect counter provides an observable surrogate for whether the consequence boundary was crossed.
 
----
+A successful boundary evaluation issues a single-use internal gate ticket to the protected-effect gate.
+
+The gate accepts only the valid ticket and consumes it after use.
+
+A forged or otherwise invalid ticket is rejected:
+
+`EFFECT_GATE_BLOCKED`
+
+The effect counter provides an observable surrogate for whether the consequence boundary was crossed.
+
+## Protected-Effect Boundary
+
+A refusal status alone is not treated as sufficient evidence of consequence prevention.
+
+The carrier therefore records:
+
+```text
+pre_effect_counter
+post_effect_counter
+```
+
+For a successful baseline case:
+
+```text
+post_effect_counter = pre_effect_counter + 1
+```
+
+For a blocked case:
+
+```text
+post_effect_counter = pre_effect_counter
+```
+
+The direct consequence tests therefore determine whether an attempted consequence actually reaches the protected-effect surrogate rather than merely whether the verifier reports `NO_BIND`.
 
 ## Test Matrix
-The carrier includes the following 11 bounded mutation scenarios:
+
+The carrier includes the following bounded mutation scenarios:
 
 | Scenario | Tested Condition / Mutation | Expected Outcome | Effect Status |
 | :--- | :--- | :--- | :--- |
-| **01. Baseline Bind** | Initial valid point-call | `BIND_SUCCESS` | Mutated ($0 \rightarrow 1$) |
-| **02. Lineage Continuity** | Valid chained predecessor commitment | `BIND_SUCCESS` | Mutated ($1 \rightarrow 2$) |
+| **01. Baseline Bind** | Initial valid point-call | `BIND_SUCCESS` | Mutated (`0 → 1`) |
+| **02. Lineage Continuity** | Valid chained predecessor commitment | `BIND_SUCCESS` | Mutated (`1 → 2`) |
 | **03. Authority Mutation** | Active authority revoked mid-flight | `NO_BIND_REVOKED_AUTHORITY` | Blocked |
 | **04. Lock Persistence** | Subsequent call after prior boundary breach | `SYSTEM_LOCKED` | Blocked |
 | **05. Stale Continuation** | Temporal window exceeded after valid initialization | `NO_BIND_STALE_EVIDENCE` | Blocked |
@@ -89,30 +150,83 @@ The carrier includes the following 11 bounded mutation scenarios:
 | **08. Custody Mutation** | Active custodian changed mid-flight | `NO_BIND_CUSTODY_BREACH` | Blocked |
 | **09. Replay Attack** | Previously consumed nonce resubmitted | `NO_BIND_REPLAY_ATTACK` | Blocked |
 | **10. Direct Effect Bypass** | Forged ticket submitted directly to effect gate | `EFFECT_GATE_BLOCKED` | Blocked |
-| **11A/B. Refusal-after-Refusal** | `NO_BIND` triggered, followed by direct consequence attempt | `NO_BIND` $\rightarrow$ `BLOCKED` | Blocked |
+| **11A/B. Refusal-after-Refusal** | `NO_BIND` triggered, followed by direct consequence attempt | `NO_BIND → BLOCKED` | Blocked |
 
----
+## Test Interpretation
 
-## Project Structure
-```text
-pctim-proof-carrier/
-├── src/
-│   └── pctim_core.py            # Core PCTIM verifier & logical effect gate
-├── tests/
-├── run_proof.py                 # Master test suite runner (11 scenarios)
-├── pctim_proof_receipts.txt     # Generated proof log artifact
-└── README.md                    # Orientation & scope specification
-```
+The carrier is intended to be evaluated by separating:
 
----
+1. the stated claim;
+2. the executable artifact;
+3. the mutation applied;
+4. the observed result; and
+5. the protected-effect outcome.
 
-## Running the Carrier
-Clone the repository, navigate into the folder, and run the test suite:
+A repository description or status string is not, by itself, proof of the corresponding behavior.
+
+The test evidence should therefore be derived from execution output, receipt contents, effect-counter state, and reproducibility under the published conditions.
+
+## Receipt Integrity
+
+Each carrier execution produces a boundary receipt containing the relevant public test outcome, including the nonce, status, reason, effect-counter state, and lineage commitment where applicable.
+
+A receipt commitment is generated over the published receipt fields.
+
+`verify_receipt.py` independently recomputes the published receipt commitment and reports whether the supplied receipt is internally consistent.
+
+This receipt commitment is an integrity mechanism for the public artifact. It is not presented as a production signature scheme or as a complete PCTIM proof system.
+
+## Falsification Conditions
+
+The bounded carrier claim is falsified within its stated scope if a published test demonstrates any of the following:
+
+- an invalid call increases the protected-effect counter;
+- a consumed nonce successfully produces another protected effect;
+- a broken predecessor is accepted;
+- a required authority mutation still permits the tested effect;
+- a stale continuation still reaches the tested effect;
+- a required scope or custody mutation is bypassed;
+- a forged direct effect attempt increments the effect counter; or
+- the published receipt cannot be independently reproduced and verified under the documented conditions.
+
+## Local Reproduction
+
+Clone the repository, navigate into the project directory, run the carrier, and then independently verify the generated receipt material:
 
 ```bash
 git clone https://github.com/MightyNig/pctim-proof-carrier.git
 cd pctim-proof-carrier
 python run_proof.py
+python verify_receipt.py
 ```
 
-Running the suite executes all 11 scenarios in the test matrix above and writes a full proof log to `pctim_proof_receipts.txt`.
+The carrier run executes the published mutation suite and writes its proof log to:
+
+```text
+pctim_proof_receipts.txt
+```
+
+The independent verifier evaluates the integrity of the published receipt artifact separately from the main execution command.
+
+## Project Structure
+
+```text
+pctim-proof-carrier/
+├── src/
+│   └── pctim_core.py            # Core PCTIM verifier & logical effect gate
+├── tests/
+├── run_proof.py                 # Master test suite runner
+├── verify_receipt.py            # Independent receipt verification
+├── pctim_proof_receipts.txt     # Generated proof log artifact
+└── README.md                    # Orientation & scope specification
+```
+
+## Version Boundary
+
+**PCTIM Proof Carrier v0.1.2** is a bounded mutation-boundary prototype.
+
+It is intended to establish a small, runnable, reproducible, and falsifiable public proof surface for the selected PCTIM behaviors.
+
+It does not constitute a complete disclosure or implementation of PCTIM.
+
+**The carrier is the public proof surface. The production PCTIM kernel remains protected.**
