@@ -1,58 +1,134 @@
+# verify_receipt.py v0.1.2
+"""
+Independent verifier for the PCTIM proof artifact.
+
+Validates TWO layers:
+1. PCTIMCore receipt_hash for every full boundary receipt.
+2. Runner log_hash for every execution-log entry.
+
+The JSONL artifact contains the complete receipt, so receipt_hash is not
+treated as display-only metadata.
+"""
+
 import hashlib
 import json
 import os
+import sys
 
-def verify_all_receipts():
-    receipts_path = "pctim_proof_receipts.txt"
-    if not os.path.exists(receipts_path):
-        print("FAIL: Receipt file not found.")
-        return False
+RECEIPTS_PATH = os.path.join(os.path.dirname(__file__), "pctim_proof_receipts.jsonl")
 
-    with open(receipts_path, "r", encoding="utf-8") as f:
+
+def canonical_without_receipt_hash(receipt: dict) -> str:
+    fields = {k: v for k, v in receipt.items() if k != "receipt_hash"}
+    return json.dumps(fields, sort_keys=True, separators=(",", ":"))
+
+
+def recompute_receipt_hash(receipt: dict) -> str:
+    return hashlib.sha256(
+        canonical_without_receipt_hash(receipt).encode("utf-8")
+    ).hexdigest()
+
+
+def canonical_log_record(entry: dict) -> dict:
+    return {
+        "test_id": entry["test_id"],
+        "test_name": entry["test_name"],
+        "core_receipt": entry["core_receipt"],
+    }
+
+
+def recompute_log_hash(entry: dict) -> str:
+    canonical = json.dumps(
+        canonical_log_record(entry),
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def main() -> int:
+    print("=" * 60)
+    print("PCTIM PROOF VERIFIER v0.1.2")
+    print("=" * 60)
+
+    if not os.path.exists(RECEIPTS_PATH):
+        print(f"\n[FAIL] Artifact not found: {RECEIPTS_PATH}")
+        sys.exit(1)
+
+    with open(RECEIPTS_PATH, "r", encoding="utf-8") as f:
         lines = [line.strip() for line in f if line.strip()]
 
-    all_passed = True
-    for line in lines:
-        parts = line.split(" | ")
-        if len(parts) < 4:
-            continue
-            
-        header_part = parts[0].strip()
-        if ":" in header_part:
-            sub_parts = header_part.split(":", 1)
-            test_id = sub_parts[0].strip()
-            test_name = sub_parts[1].strip()
-        else:
-            test_id = "00"
-            test_name = header_part
+    if not lines:
+        print("\n[FAIL] Artifact is empty.")
+        sys.exit(1)
 
-        status = parts[1].replace("Status:", "").strip()
-        counter_str = parts[2].replace("Counter:", "").strip()
-        counter = int(counter_str) if counter_str.isdigit() else 0
-        recorded_hash = parts[3].replace("Hash:", "").strip()
+    failures = []
+    seen_ids = set()
 
-        # Exactly matches the canonical record structure hashed by run_proof.py
-        record = {
-            "test_id": test_id,
-            "test_name": test_name,
-            "status": status,
-            "protected_effect_counter": counter,
-            "details": status == "BIND_SUCCESS"
-        }
-        canonical = json.dumps(record, sort_keys=True)
-        calculated_hash = hashlib.sha256(canonical.encode('utf-8')).hexdigest()[:16]
+    print(f"\nArtifact : {os.path.basename(RECEIPTS_PATH)}")
+    print(f"Entries  : {len(lines)}")
+    print("\nValidating full receipt_hash and log_hash commitments...\n")
 
-        if calculated_hash == recorded_hash:
-            print(f"[VERIFIED] Test {test_id}: Hash match ({calculated_hash})")
-        else:
-            print(f"[FAILED] Test {test_id}: Hash mismatch! Recorded: {recorded_hash}, Calculated: {calculated_hash}")
-            all_passed = False
+    for idx, line in enumerate(lines, start=1):
+        try:
+            entry = json.loads(line)
+            required = {"test_id", "test_name", "core_receipt", "log_hash"}
+            if not required.issubset(entry):
+                raise ValueError("missing required fields")
 
-    return all_passed
+            test_id = entry["test_id"]
+            if test_id in seen_ids and test_id not in {"13A", "13B"}:
+                raise ValueError(f"duplicate test_id: {test_id}")
+            seen_ids.add(test_id)
+
+            receipt = entry["core_receipt"]
+            stored_receipt_hash = receipt.get("receipt_hash")
+            if not stored_receipt_hash:
+                raise ValueError("missing core receipt_hash")
+
+            recomputed_receipt = recompute_receipt_hash(receipt)
+            receipt_ok = stored_receipt_hash == recomputed_receipt
+
+            recomputed_log = recompute_log_hash(entry)
+            log_ok = entry["log_hash"] == recomputed_log
+
+            if receipt_ok and log_ok:
+                print(
+                    f"PASS [{test_id:>3}] "
+                    f"receipt_hash={stored_receipt_hash[:16]}... "
+                    f"log_hash={entry['log_hash'][:16]}..."
+                )
+            else:
+                print(f"FAIL [{test_id:>3}]")
+                if not receipt_ok:
+                    print(
+                        f"  receipt_hash stored     : {stored_receipt_hash}\n"
+                        f"  receipt_hash recomputed  : {recomputed_receipt}"
+                    )
+                if not log_ok:
+                    print(
+                        f"  log_hash stored          : {entry['log_hash']}\n"
+                        f"  log_hash recomputed      : {recomputed_log}"
+                    )
+                failures.append((idx, test_id))
+
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            print(f"FAIL [line {idx}] malformed artifact: {exc}")
+            failures.append((idx, f"line-{idx}"))
+
+    print("\n" + "=" * 60)
+    if failures:
+        print(f"VERIFICATION RESULT: FAILED ({len(failures)} failure(s))")
+        for idx, ident in failures:
+            print(f"  - {ident} at line {idx}")
+        print("=" * 60)
+        return 1
+
+    print(f"VERIFICATION RESULT: PASSED")
+    print(f"All {len(lines)} entries passed both cryptographic checks.")
+    print("=" * 60)
+    return 0
+
 
 if __name__ == "__main__":
-    success = verify_all_receipts()
-    if success:
-        print("\nRESULT: Independent Receipt Verification PASSED.")
-    else:
-        print("\nRESULT: Independent Receipt Verification FAILED.")
+    raise SystemExit(main())
