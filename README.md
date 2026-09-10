@@ -137,7 +137,7 @@ pctim-proof-carrier/
 │   └── pctim_core.py            # Core PCTIM verifier & logical effect gate
 ├── run_proof.py                 # Master test suite runner
 ├── verify_receipt.py            # Independent receipt verification
-├── pctim_proof_receipts.jsonl     # Generated proof log artifact
+├── pctim_proof_receipts.jsonl   # Generated proof log artifact
 └── README.md                    # Orientation & scope specification
 ```
 
