@@ -122,7 +122,8 @@ pctim_proof_receipts.txt
 
 The independent verifier evaluates the integrity of the published receipt artifact separately from the main execution command.
 
-Note on Determinism: The carrier guarantees deterministic behavioral outcomes (NO_BIND → BLOCKED). Because the temporal decay window evaluates live wall-clock nanoseconds, independent test executions will produce unique receipt bytes and cryptographic 
+## Note on Determinism:
+ The carrier guarantees deterministic behavioral outcomes (NO_BIND → BLOCKED). Because the temporal decay window evaluates live wall-clock nanoseconds, independent test executions will produce unique receipt bytes and cryptographic 
 hashes. The public claim is strict behavioral reproducibility, not byte-identical cryptographic replay across independent runs.
 
 ## Project Structure
