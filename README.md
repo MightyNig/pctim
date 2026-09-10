@@ -122,16 +122,18 @@ pctim_proof_receipts.txt
 
 The independent verifier evaluates the integrity of the published receipt artifact separately from the main execution command.
 
+## Note on Determinism: The carrier guarantees deterministic behavioral outcomes (NO_BIND → BLOCKED). Because the temporal decay window evaluates live wall-clock nanoseconds, independent test executions will produce unique receipt bytes and cryptographic 
+hashes. The public claim is strict behavioral reproducibility, not byte-identical cryptographic replay across independent runs.
+
 ## Project Structure
 
 ```text
 pctim-proof-carrier/
 ├── src/
 │   └── pctim_core.py            # Core PCTIM verifier & logical effect gate
-├── tests/
 ├── run_proof.py                 # Master test suite runner
 ├── verify_receipt.py            # Independent receipt verification
-├── pctim_proof_receipts.txt     # Generated proof log artifact
+├── pctim_proof_receipts.jsonl     # Generated proof log artifact
 └── README.md                    # Orientation & scope specification
 ```
 
